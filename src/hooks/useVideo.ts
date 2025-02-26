@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export function useVideo() {
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
+  const [isInitializing, setIsInitializing] = useState(false);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(false);
 
   const videoStreamRef = useRef<MediaStream | null>(null);
 
@@ -15,14 +17,19 @@ export function useVideo() {
 
       if (currentStream) {
         currentStream.getTracks().forEach((track) => (track.enabled = true));
+        setIsVideoEnabled(true);
         return;
       }
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia(options);
+
         setVideoStream(stream);
+        setIsVideoEnabled(true);
       } catch (error) {
         console.error("Error while accessing camera:", error);
+      } finally {
+        setIsInitializing(false);
       }
     },
     []
@@ -32,21 +39,38 @@ export function useVideo() {
     videoStreamRef.current
       ?.getTracks()
       .forEach((track) => (track.enabled = false));
+
+    setIsVideoEnabled(false);
   }, []);
 
-  const destroyStream = useCallback(() => {
-    videoStreamRef.current?.getTracks().forEach((track) => track.stop());
+  const destroyStreams = useCallback(() => {
+    videoStreamRef.current?.getTracks().forEach((track) => {
+      track.stop();
+      videoStreamRef.current?.removeTrack(track);
+    });
     setVideoStream(null);
   }, []);
 
   useEffect(() => {
-    startStream();
+    setIsInitializing(true);
+
+    const timeout = setTimeout(() => {
+      startStream();
+    }, 1000);
 
     return () => {
-      destroyStream();
+      clearTimeout(timeout);
+      destroyStreams();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { videoStream, startStream, stopStreams, destroyStream };
+  return {
+    videoStream,
+    startStream,
+    stopStreams,
+    destroyStreams,
+    isInitializing,
+    isVideoEnabled,
+  };
 }
