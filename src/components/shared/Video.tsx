@@ -21,11 +21,7 @@ export const Video = React.memo(
       }
     }, [stream, videoRef]);
 
-    return (
-      <video {...props} ref={videoRef} autoPlay playsInline>
-        Video
-      </video>
-    );
+    return <video {...props} ref={videoRef} autoPlay playsInline />;
   })
 );
 
