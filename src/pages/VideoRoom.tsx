@@ -8,7 +8,6 @@ export const VideoRoom = () => {
   const {
     videoStream,
     startStream,
-    stopStreams,
     destroyStreams,
     isInitializing,
     isAudioEnabled,
