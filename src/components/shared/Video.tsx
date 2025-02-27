@@ -11,15 +11,17 @@ export const Video = React.memo(
 
     useEffect(() => {
       if (videoRef && videoRef.current) {
-        videoRef.current.srcObject = stream;
+        if (stream !== null) {
+          videoRef.current.srcObject = stream;
+        } else {
+          if (videoRef.current.srcObject) {
+            videoRef.current.srcObject = null;
+          }
+        }
       }
     }, [stream, videoRef]);
 
-    return (
-      <video {...props} ref={videoRef} autoPlay playsInline>
-        Video
-      </video>
-    );
+    return <video {...props} ref={videoRef} autoPlay playsInline />;
   })
 );
 
