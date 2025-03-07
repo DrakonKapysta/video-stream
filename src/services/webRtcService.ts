@@ -6,7 +6,7 @@ class WebRTCService {
   private peerConnection: RTCPeerConnection | null = null;
   private localStream: MediaStream | null = null;
   private remoteStream: MediaStream | null = null;
-  private mediaConstraints = { audio: true, video: false };
+  private mediaConstraints = { audio: true, video: true };
 
   private localStreamListeners: StreamChangeListener[] = [];
   private remoteStreamListeners: StreamChangeListener[] = [];
