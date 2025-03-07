@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { Socket } from "socket.io-client";
 import { socketService } from "@/services/socketService";
 import { Message } from "@/types/SocketTypes";
+import webRtcService from "@/services/webRtcService";
 
 interface SocketState {
   socket: Socket | null;
@@ -25,19 +26,28 @@ export const useSocketStore = create<SocketState>()((set, get) => ({
   ...initialState,
 
   initializeSocket: () =>
-    set(() => {
-      const socket = socketService.initSocket();
-      socket.on("connect", () => set({ connected: true }));
+    set((state) => {
+      if (!state.socket || !state.socket.connected) {
+        const socket = socketService.initSocket();
+        socket.on("connect", () => set({ connected: true }));
 
-      socket.on("disconnect", () => set({ connected: false }));
+        socket.on("disconnect", () => set({ connected: false }));
 
-      socket.on("message", (message) => {
-        set((state) => ({
-          messages: [...state.messages, { ...message, received: true }],
-        }));
-      });
+        socket.on("message", (message) => {
+          console.log("Message from server", message);
+          set((state) => ({
+            messages: [...state.messages, { ...message, received: true }],
+          }));
+        });
+        socket.on("ice-candidate", (data) =>
+          webRtcService.handleNewICECandidateMsg(data)
+        );
+        socket.on("offer", (data) => webRtcService.handleVideoOfferMsg(data));
+        socket.on("answer", (data) => webRtcService.handleVideoAnswerMsg(data));
 
-      return { socket };
+        return { socket };
+      }
+      return state;
     }),
 
   disconnect: () =>

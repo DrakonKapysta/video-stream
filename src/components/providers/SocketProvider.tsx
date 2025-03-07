@@ -8,9 +8,18 @@ interface SocketProviderProps {
 export const SocketProvider: FC<SocketProviderProps> = ({ children }) => {
   const { initializeSocket, disconnect } = useSocketStore();
   useEffect(() => {
-    initializeSocket();
+    try {
+      initializeSocket();
+    } catch (error) {
+      console.error("Failed to initialize socket:", error);
+    }
+
     return () => {
-      disconnect();
+      try {
+        disconnect();
+      } catch (error) {
+        console.error("Error during socket disconnection:", error);
+      }
     };
 
     // eslint-disable-next-line

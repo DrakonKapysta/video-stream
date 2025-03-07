@@ -77,15 +77,13 @@ export function useVideo() {
   }, []);
   const hideCamera = useCallback((state: boolean) => {
     if (!state) {
-      // Выключаем камеру, но оставляем микрофон
       videoStreamRef.current?.getVideoTracks().forEach((track) => track.stop());
       setIsCameraEnabled(false);
       setVideoStream((prev) => {
         if (!prev) return null;
-        return new MediaStream(prev.getAudioTracks()); // Оставляем только аудио
+        return new MediaStream(prev.getAudioTracks());
       });
     } else {
-      // Включаем камеру снова
       setIsInitializing(true);
       navigator.mediaDevices
         .getUserMedia({ video: true })
@@ -93,7 +91,6 @@ export function useVideo() {
           setVideoStream((prev) => {
             if (!prev) return videoStream;
 
-            // Объединяем новый видео-поток с аудио, если оно есть
             const audioTracks = prev.getAudioTracks();
             audioTracks.forEach((track) => videoStream.addTrack(track));
             setIsCameraEnabled(true);
