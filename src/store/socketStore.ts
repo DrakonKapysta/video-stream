@@ -39,9 +39,10 @@ export const useSocketStore = create<SocketState>()((set, get) => ({
             messages: [...state.messages, { ...message, received: true }],
           }));
         });
-        socket.on("ice-candidate", (data) =>
-          webRtcService.handleNewICECandidateMsg(data)
-        );
+        socket.on("ice-candidate", (data) => {
+          console.log("DATA", data);
+          webRtcService.handleNewICECandidateMsg(data);
+        });
         socket.on("offer", (data) => webRtcService.handleVideoOfferMsg(data));
         socket.on("answer", (data) => webRtcService.handleVideoAnswerMsg(data));
 

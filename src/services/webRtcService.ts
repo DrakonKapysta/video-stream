@@ -159,6 +159,7 @@ class WebRTCService {
     }
   }
   public async handleVideoAnswerMsg(msg: { sdp: RTCSessionDescriptionInit }) {
+    console.log("handleVideoAnswerMsg", msg);
     const desc = new RTCSessionDescription(msg.sdp);
     await this.peerConnection?.setRemoteDescription(desc).catch(reportError);
   }
@@ -190,17 +191,22 @@ class WebRTCService {
         if (!socket) return;
         const firstUser = await this.findFirstUser(socket);
         if (!firstUser) return;
-        socketService.getSocket()?.emit("newRTCAnswer", {
+        socketService.getSocket()?.emit("webRTCCreateAnswer", {
           targetSocketId: firstUser.socketId,
           sdp: this.peerConnection?.localDescription,
         });
       })
       .catch(this.handleGetUserMediaError);
   }
-  public handleNewICECandidateMsg(data: {
+  public async handleNewICECandidateMsg(data: {
     candidate: RTCIceCandidate;
     targetSocketId: string;
   }) {
+    if (!this.peerConnection) return;
+    if (!this.peerConnection.remoteDescription) {
+      console.warn("Remote description is null, delaying ICE candidate");
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
     const candidate = new RTCIceCandidate(data.candidate);
 
     this.peerConnection?.addIceCandidate(candidate).catch(this.reportError);
