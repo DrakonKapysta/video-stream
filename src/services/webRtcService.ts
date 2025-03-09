@@ -136,6 +136,10 @@ class WebRTCService {
     this.closeVideoCall();
   }
   public closeVideoCall() {
+    console.log(
+      "Trying to close video call, peerConnection:",
+      this.peerConnection
+    );
     if (this.peerConnection) {
       this.peerConnection.ontrack = null;
       this.peerConnection.onicecandidate = null;
@@ -159,10 +163,10 @@ class WebRTCService {
     }
   }
   public async handleVideoAnswerMsg(msg: { sdp: RTCSessionDescriptionInit }) {
-    console.log("handleVideoAnswerMsg", msg);
     const desc = new RTCSessionDescription(msg.sdp);
     await this.peerConnection?.setRemoteDescription(desc).catch(reportError);
   }
+
   public handleVideoOfferMsg(data: {
     sdp: RTCSessionDescriptionInit;
     targetSocketId: string;
@@ -191,9 +195,10 @@ class WebRTCService {
         if (!socket) return;
         const firstUser = await this.findFirstUser(socket);
         if (!firstUser) return;
-        socketService.getSocket()?.emit("webRTCCreateAnswer", {
+        socketService.getSocket()?.emit("newRTCCreateAnswer", {
           targetSocketId: firstUser.socketId,
           sdp: this.peerConnection?.localDescription,
+          from: socket.id,
         });
       })
       .catch(this.handleGetUserMediaError);
@@ -213,7 +218,6 @@ class WebRTCService {
   }
 
   public async handleICECandidateEvent(event: RTCPeerConnectionIceEvent) {
-    console.log("LOG: handleICECandidateEvent -------- START");
     if (event.candidate) {
       const socket = socketService.getSocket();
       if (!socket) return;
@@ -221,7 +225,6 @@ class WebRTCService {
       if (!firstUser) return;
       this.newICECandidate(event.candidate, firstUser.socketId);
     }
-    console.log("LOG: handleICECandidateEvent -------- END");
   }
   public handleTrackEvent(event: RTCTrackEvent) {
     this.setRemoteStream(event.streams[0]);
@@ -251,6 +254,7 @@ class WebRTCService {
         socket?.emit("newRTCCreateOffer", {
           targetSocketId: firstUser.socketId,
           sdp: this.peerConnection?.localDescription,
+          from: socket.id,
         });
       })
       .catch(this.reportError);
@@ -261,12 +265,17 @@ class WebRTCService {
   ) => {
     const socket = socketService.getSocket();
     if (socket) {
-      socket.emit("newICECandidate", { candidate, targetSocketId });
+      socket.emit("newICECandidate", {
+        candidate,
+        targetSocketId,
+        from: socket.id,
+      });
     }
   };
   private reportError(error: Error) {
     alert(error.message);
   }
+
   get getLocalStream() {
     return this.localStream;
   }

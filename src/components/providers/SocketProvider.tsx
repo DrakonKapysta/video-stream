@@ -1,3 +1,4 @@
+import { useCallingStore } from "@/store/callingStore";
 import { useSocketStore } from "@/store/socketStore";
 import React, { FC, useEffect } from "react";
 
@@ -7,9 +8,13 @@ interface SocketProviderProps {
 
 export const SocketProvider: FC<SocketProviderProps> = ({ children }) => {
   const { initializeSocket, disconnect } = useSocketStore();
+  const initializeCallHandlers = useCallingStore(
+    (state) => state.initializeCallHandlers
+  );
   useEffect(() => {
     try {
       initializeSocket();
+      initializeCallHandlers();
     } catch (error) {
       console.error("Failed to initialize socket:", error);
     }
