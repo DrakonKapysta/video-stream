@@ -1,25 +1,33 @@
+import { Calling } from "@/components/shared/Calling";
 import { Controls } from "@/components/shared/Controls/ControlsProvider";
 import { Video } from "@/components/shared/Video";
 import { Button } from "@/components/ui/button";
-import { useVideo } from "@/hooks/useVideo";
+import useCalling from "@/hooks/useCalling";
 import { socketService } from "@/services/socketService";
 import webRtcService from "@/services/webRtcService";
 import { useSocketStore } from "@/store/socketStore";
-import { Camera, CameraOff, Volume2, VolumeOff } from "lucide-react";
+import {
+  Camera,
+  CameraOff,
+  Phone,
+  PhoneOff,
+  Volume2,
+  VolumeOff,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 export const VideoRoom = () => {
-  // const {
-  //   videoStream,
-  //   startStream,
-  //   destroyStreams,
-  //   isAudioEnabled,
-  //   isCameraEnabled,
-
-  //   muteAudio,
-  //   hideCamera,
-  // } = useVideo();
   const socket = useSocketStore((state) => state.socket);
+  const {
+    isCalling,
+    caller,
+    resetCaller,
+    setIsCalling,
+    setCaller,
+    setInitiator,
+    isInitiator,
+    accepted,
+  } = useCalling();
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [isInCall, setIsInCall] = useState(false);
@@ -34,13 +42,54 @@ export const VideoRoom = () => {
     }
 
     // Get connected users
-    const users = await socketService.getConnectedUsers();
-    const otherUser = users.find((user) => user.socketId !== socket.id);
-    console.log("Other user", otherUser);
-    if (otherUser) {
-      webRtcService.invite(otherUser.socketId);
+    const firstUser = await webRtcService.findFirstUser(socket);
+    if (firstUser) {
+      socket.emit("calling", {
+        from: socket.id,
+        targetSocketId: firstUser.socketId,
+      });
+      setIsCalling(true);
+      setCaller({
+        calleeUsername: firstUser.username,
+        targetSocketId: firstUser.socketId,
+        from: socket.id!,
+        callerUsername: "Me",
+      });
+      setInitiator(true);
     } else {
       alert("No other users connected to call");
+    }
+  };
+
+  const handleAcceptCall = async () => {
+    if (socket) {
+      const firstUser = await webRtcService.findFirstUser(socket);
+      if (!firstUser) return;
+      webRtcService.invite(firstUser.socketId);
+      setIsCalling(false);
+      accepted(firstUser.socketId);
+    }
+  };
+  const handleDeclineCall = async () => {
+    resetCaller();
+    if (isInitiator) {
+      setInitiator(false);
+    }
+  };
+
+  const handleCallClose = async () => {
+    webRtcService.closeVideoCall();
+    if (socket) {
+      const firstUser = await webRtcService.findFirstUser(socket);
+      if (!firstUser) return;
+
+      socket.emit("hang-up", {
+        from: socket.id,
+        targetSocketId: firstUser.socketId,
+      });
+    }
+    if (isInitiator) {
+      setInitiator(false);
     }
   };
 
@@ -70,7 +119,7 @@ export const VideoRoom = () => {
   }, []);
 
   return (
-    <div className="rounded-md flex flex-col h-screen">
+    <div className="relative rounded-md flex flex-col h-screen">
       <div className="flex flex-col items-center flex-1  ">
         <div className="flex relative flex-1 w-full p-2">
           <Video
@@ -89,33 +138,19 @@ export const VideoRoom = () => {
         </div>
         <Controls>
           <div className="flex gap-2 justify-center items-center min-h-[100px] w-full border-t-2 border-purple-500">
-            {/* <Button
-              onClick={() => {
-                startStream();
-              }}
-            >
-              Start Video
-            </Button>
-            <Button onClick={() => hideCamera(!isCameraEnabled)}>
-              {isCameraEnabled ? <Camera size={16} /> : <CameraOff />}
-            </Button>
-            <Button onClick={() => muteAudio(!isAudioEnabled)}>
-              {isAudioEnabled ? <Volume2 size={16} /> : <VolumeOff size={16} />}
-            </Button>
-            <Button
-              onClick={() => {
-                destroyStreams();
-              }}
-            >
-              Destroy Stream
-            </Button> */}
-            <Button
-              onClick={() => {
-                initiateCall();
-              }}
-            >
-              Call
-            </Button>
+            {localStream === null && remoteStream === null ? (
+              <Button
+                onClick={() => {
+                  initiateCall();
+                }}
+              >
+                <Phone className="mr-2" /> Call
+              </Button>
+            ) : (
+              <Button variant={"destructive"} onClick={handleCallClose}>
+                <PhoneOff className="mr-2" /> Hang up
+              </Button>
+            )}
             <Button
               onClick={async () => {
                 console.log(await socketService.getConnectedUsers());
@@ -123,9 +158,27 @@ export const VideoRoom = () => {
             >
               Get connected users
             </Button>
+            <Button
+              onClick={async () => {
+                socket?.emit("setUserName", {
+                  socketId: socket.id,
+                  username: "test",
+                });
+              }}
+            >
+              Set username
+            </Button>
           </div>
         </Controls>
       </div>
+      {isCalling && (
+        <Calling
+          isInitiator={isInitiator}
+          onAcceptCall={handleAcceptCall}
+          onDeclineCall={handleDeclineCall}
+          caller={caller}
+        />
+      )}
     </div>
   );
 };
