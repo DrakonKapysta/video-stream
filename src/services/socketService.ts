@@ -18,6 +18,11 @@ class SocketService {
 
   public getSocket = () => this.socket;
 
+  public createRoom = async (roomName: string) => {
+    const response = await this.socket?.emitWithAck("createRoom", roomName);
+    return response;
+  };
+
   public getConnectedUsers = async (): Promise<
     { username: string; socketId: string }[]
   > => {
