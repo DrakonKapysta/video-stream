@@ -26,7 +26,7 @@ export const VideoList = React.forwardRef<HTMLDivElement, VideoListProps>(
             className="border rounded-md p-2 flex justify-center items-center"
             key={video.id}
           >
-            {video.username}
+            {video.userName}
           </div>
         ))}
         {videos.length % 2 !== 0 && <div className="border bg-accent"></div>}

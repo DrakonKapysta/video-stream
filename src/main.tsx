@@ -12,7 +12,7 @@ createRoot(document.getElementById("root")!).render(
       <BrowserRouter>
         <Routes>
           <Route index element={<RoomSelectPage />} />
-          <Route path="/room" element={<VideoRoom />} />
+          <Route path="/room/:id" element={<VideoRoom />} />
         </Routes>
       </BrowserRouter>
     </SocketProvider>
