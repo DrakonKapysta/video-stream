@@ -18,8 +18,35 @@ class SocketService {
 
   public getSocket = () => this.socket;
 
+  public createRoom = async (roomName: string) => {
+    const response = await this.socket?.emitWithAck("createRoom", roomName);
+    return response;
+  };
+
+  public async findFirstUser(socket: Socket) {
+    const users = await socketService.getConnectedUsers();
+    if (users.length <= 0) return null;
+
+    const firstUser = users.find((user) => user.socketId !== socket?.id);
+    if (!firstUser) {
+      return null;
+    }
+    return firstUser;
+  }
+
+  public async getConnectedUsersInRoom(roomName: string) {
+    try {
+      const users = await this.socket?.emitWithAck("getUsersInRoom", roomName);
+      if (!users) return [];
+      return users;
+    } catch (error) {
+      console.log(error);
+      return [];
+    }
+  }
+
   public getConnectedUsers = async (): Promise<
-    { username: string; socketId: string }[]
+    { userName: string; socketId: string }[]
   > => {
     if (!this.socket) return [];
     const users = await this.socket?.emitWithAck("getAllUser");

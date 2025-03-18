@@ -60,7 +60,7 @@ export const useCallingStore = create<CallingState>()((set, get) => ({
     set(() => {
       const socket = socketService.getSocket();
       if (socket) {
-        webRtcService.findFirstUser(socket).then((firstUser) => {
+        socketService.findFirstUser(socket).then((firstUser) => {
           if (firstUser) {
             socket.emit("declined", {
               from: socket.id,

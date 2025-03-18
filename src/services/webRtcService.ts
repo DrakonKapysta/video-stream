@@ -193,7 +193,7 @@ class WebRTCService {
       .then(async () => {
         const socket = socketService.getSocket();
         if (!socket) return;
-        const firstUser = await this.findFirstUser(socket);
+        const firstUser = await socketService.findFirstUser(socket);
         if (!firstUser) return;
         socketService.getSocket()?.emit("newRTCCreateAnswer", {
           targetSocketId: firstUser.socketId,
@@ -221,7 +221,7 @@ class WebRTCService {
     if (event.candidate) {
       const socket = socketService.getSocket();
       if (!socket) return;
-      const firstUser = await this.findFirstUser(socket);
+      const firstUser = await socketService.findFirstUser(socket);
       if (!firstUser) return;
       this.newICECandidate(event.candidate, firstUser.socketId);
     }
@@ -229,16 +229,7 @@ class WebRTCService {
   public handleTrackEvent(event: RTCTrackEvent) {
     this.setRemoteStream(event.streams[0]);
   }
-  public async findFirstUser(socket: Socket) {
-    const users = await socketService.getConnectedUsers();
-    if (users.length <= 0) return null;
 
-    const firstUser = users.find((user) => user.socketId !== socket?.id);
-    if (!firstUser) {
-      return null;
-    }
-    return firstUser;
-  }
   public handleNegotiationNeededEvent() {
     this.peerConnection
       ?.createOffer()
@@ -248,7 +239,7 @@ class WebRTCService {
       .then(async () => {
         const socket = socketService.getSocket();
         if (!socket) return;
-        const firstUser = await this.findFirstUser(socket);
+        const firstUser = await socketService.findFirstUser(socket);
         if (!firstUser) return;
 
         socket?.emit("newRTCCreateOffer", {

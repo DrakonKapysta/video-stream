@@ -10,3 +10,16 @@ export interface CallerInfo {
   targetSocketId: string;
   callerUsername: string;
 }
+
+export interface RoomInfo {
+  roomId: string;
+  roomName: string;
+  ownerId: string;
+  ownerUsername: string;
+  errorMessage: string | null;
+}
+
+export interface FormRoomInfo {
+  userName: string;
+  roomName: string;
+}
