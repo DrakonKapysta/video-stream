@@ -23,3 +23,8 @@ export interface FormRoomInfo {
   userName: string;
   roomName: string;
 }
+
+export interface RoomUser {
+  socketId: string;
+  userName: string;
+}

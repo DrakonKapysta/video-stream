@@ -1,3 +1,4 @@
+import { RoomUser } from "@/types/SocketTypes";
 import { io, Socket } from "socket.io-client";
 
 class SocketService {
@@ -23,7 +24,7 @@ class SocketService {
     return response;
   };
 
-  public async findFirstUser(socket: Socket) {
+  public async findFirstUser(socket: Socket): Promise<RoomUser | null> {
     const users = await socketService.getConnectedUsers();
     if (users.length <= 0) return null;
 
@@ -34,9 +35,14 @@ class SocketService {
     return firstUser;
   }
 
-  public async getConnectedUsersInRoom(roomName: string) {
+  public async getConnectedUsersInRoom(
+    roomName: string
+  ): Promise<RoomUser[] | []> {
     try {
-      const users = await this.socket?.emitWithAck("getUsersInRoom", roomName);
+      const users: RoomUser[] = await this.socket?.emitWithAck(
+        "getUsersInRoom",
+        roomName
+      );
       if (!users) return [];
       return users;
     } catch (error) {
